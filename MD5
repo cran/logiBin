@@ -1,0 +1,12 @@
+c7365da1897c9e07052cf7d747ebe183 *DESCRIPTION
+297e4f2eb703033ee17a5540eacb80e4 *NAMESPACE
+063c3761e0e3d7cf01763eb3182317c4 *R/logiBin.R
+5473bbad9613975f45c3c6632ea362f1 *data/test.RData
+9493808ffb19b783a086a5f9aa8f9731 *man/binTest.Rd
+bce6a3cad5a16d7c11e15aeeb83e41fb *man/createBins.Rd
+cdcece84aaf415691514e59369d76658 *man/forceDecrTrend.Rd
+99093f8449404c642555e799dfb11557 *man/forceIncrTrend.Rd
+e038a6dc4af29dc7e0e7f61123afa564 *man/getBins.Rd
+51ddd8b73be75b0ac04283bb4e062df8 *man/loanData.Rd
+51f1b012152ee9fd635ce6226e1c3f8b *man/manualSplit.Rd
+665fa80a6e0619812e59756ba974ccf3 *man/naCombine.Rd
