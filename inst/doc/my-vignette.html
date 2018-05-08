@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Sneha Tody" />
+
+<meta name="date" content="2018-05-08" />
+
+<title>Binning variables before running logistic regression</title>
+
+
+
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Binning variables before running logistic regression</h1>
+<h4 class="author"><em>Sneha Tody</em></h4>
+<h4 class="date"><em>2018-05-08</em></h4>
+
+
+
+<p>The logiBin package enables fast binning of multiple variables using parallel processing. A summary of all the variables binned is generated which provides the information value, entropy, an indicator of whether the variable follows a monotonic trend or not, etc. It supports rebinning of variables to force a monotonic trend as well as manual binning based on pre specified cuts.</p>
+<div id="creating-the-bins-for-continuous-and-categorical-variables" class="section level2">
+<h2>Creating the bins for continuous and categorical variables</h2>
+<p>The getBins function uses parallel processing to compute bins for continuous and categorical variables. The splits are computed using the partykit package which uses conditional inferencing trees. Refer to the package documentation for more details. A separate bin is created for NA values. This can be combined using naCombine function. Categorical variables with a maximum of 10 distinct values are supported.</p>
+<p>Eg: b1 &lt;- getBins(loanData, “bad_flag”, c(“age”, “LTV”, “score”, “balance”), minCr = 0.8, nCores = 2)</p>
+<p>This retrurns a list containing 3 elements. One is a a dataframe called err which contains details of all the variables that could not be split and the reason for the same.<br />
+<br />
+</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="left">var</th>
+<th align="left">error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>9</td>
+<td align="left">score</td>
+<td align="left">No significant splits</td>
+</tr>
+</tbody>
+</table>
+<p><br />
+It can be seen that no significant splits were found for the variable ‘score’. The other variables specified were split into bins. The summary of these splits can be seen from the next element of the list which is a dataframe called varSummar. This contains the summary of the variables’ IV value, entropy, p value from ctree function in partykit package, flag which indicates if bad rate increases/decreases with variable value, flag to indicate if a monotonic trend is present, number of bins which flip (i.e. do not follow a monotonic trend), number of bins of the variable and a flag to indicate whether it includes pure nodes (node which do not have any defaults).</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="left">var</th>
+<th align="right">iv</th>
+<th align="right">pVal</th>
+<th align="right">stat</th>
+<th align="right">ent</th>
+<th align="left">trend</th>
+<th align="left">monTrend</th>
+<th align="right">flipRatio</th>
+<th align="right">numBins</th>
+<th align="left">purNode</th>
+<th align="left">varType</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4</td>
+<td align="left">age</td>
+<td align="right">0.8399</td>
+<td align="right">0.0356891</td>
+<td align="right">1.484305</td>
+<td align="right">0.7367</td>
+<td align="left">I</td>
+<td align="left">N</td>
+<td align="right">0.5</td>
+<td align="right">3</td>
+<td align="left">N</td>
+<td align="left">integer</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td align="left">LTV</td>
+<td align="right">0.5241</td>
+<td align="right">0.0067388</td>
+<td align="right">1.993516</td>
+<td align="right">0.7567</td>
+<td align="left">D</td>
+<td align="left">Y</td>
+<td align="right">0.0</td>
+<td align="right">3</td>
+<td align="left">Y</td>
+<td align="left">numeric</td>
+</tr>
+<tr class="odd">
+<td>12</td>
+<td align="left">balance</td>
+<td align="right">0.3536</td>
+<td align="right">0.0360245</td>
+<td align="right">1.480682</td>
+<td align="right">0.7900</td>
+<td align="left">D</td>
+<td align="left">Y</td>
+<td align="right">0.0</td>
+<td align="right">2</td>
+<td align="left">N</td>
+<td align="left">integer</td>
+</tr>
+</tbody>
+</table>
+<p><br />
+The variables LTV &amp; balance have a monotonic decreasing trend which indicates that the bad rate decreases as the value of the variable increases. The variable age has an increasing trend. However it is not monotonic and there is a flip in 50% of the bins. In order to check this, look at the second element of the list which is a data frame called bin which contains details of all the bins of the variables.</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="left">var</th>
+<th align="left">bin</th>
+<th align="right">count</th>
+<th align="right">bads</th>
+<th align="right">goods</th>
+<th align="right">propn</th>
+<th align="right">bad_rate</th>
+<th align="right">iv</th>
+<th align="right">ent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td align="left">age</td>
+<td align="left">age &lt;= 34</td>
+<td align="right">44</td>
+<td align="right">19</td>
+<td align="right">25</td>
+<td align="right">44</td>
+<td align="right">43.18</td>
+<td align="right">0.2602</td>
+<td align="right">0.9865</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td align="left">age</td>
+<td align="left">age &gt; 34 &amp; age &lt;= 45</td>
+<td align="right">32</td>
+<td align="right">2</td>
+<td align="right">30</td>
+<td align="right">32</td>
+<td align="right">6.25</td>
+<td align="right">0.5772</td>
+<td align="right">0.3373</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td align="left">age</td>
+<td align="left">age &gt; 45</td>
+<td align="right">24</td>
+<td align="right">6</td>
+<td align="right">18</td>
+<td align="right">24</td>
+<td align="right">25.00</td>
+<td align="right">0.0025</td>
+<td align="right">0.8113</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td align="left">age</td>
+<td align="left">Total</td>
+<td align="right">100</td>
+<td align="right">27</td>
+<td align="right">73</td>
+<td align="right">1</td>
+<td align="right">27.00</td>
+<td align="right">0.8399</td>
+<td align="right">0.7367</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td align="left">LTV</td>
+<td align="left">LTV &lt;= 0.77</td>
+<td align="right">24</td>
+<td align="right">13</td>
+<td align="right">11</td>
+<td align="right">24</td>
+<td align="right">54.17</td>
+<td align="right">0.3843</td>
+<td align="right">0.9950</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td align="left">LTV</td>
+<td align="left">LTV &gt; 0.77</td>
+<td align="right">74</td>
+<td align="right">14</td>
+<td align="right">60</td>
+<td align="right">74</td>
+<td align="right">18.92</td>
+<td align="right">0.1398</td>
+<td align="right">0.6998</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td align="left">LTV</td>
+<td align="left">is.na(LTV)</td>
+<td align="right">2</td>
+<td align="right">0</td>
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="right">0.00</td>
+<td align="right">Inf</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td align="left">LTV</td>
+<td align="left">Total</td>
+<td align="right">100</td>
+<td align="right">27</td>
+<td align="right">73</td>
+<td align="right">1</td>
+<td align="right">27.00</td>
+<td align="right">0.5241</td>
+<td align="right">0.7567</td>
+</tr>
+<tr class="odd">
+<td>10</td>
+<td align="left">balance</td>
+<td align="left">balance &lt;= 6359</td>
+<td align="right">19</td>
+<td align="right">10</td>
+<td align="right">9</td>
+<td align="right">19</td>
+<td align="right">52.63</td>
+<td align="right">0.2718</td>
+<td align="right">0.9980</td>
+</tr>
+<tr class="even">
+<td>11</td>
+<td align="left">balance</td>
+<td align="left">balance &gt; 6359</td>
+<td align="right">81</td>
+<td align="right">17</td>
+<td align="right">64</td>
+<td align="right">81</td>
+<td align="right">20.99</td>
+<td align="right">0.0818</td>
+<td align="right">0.7412</td>
+</tr>
+<tr class="odd">
+<td>12</td>
+<td align="left">balance</td>
+<td align="left">Total</td>
+<td align="right">100</td>
+<td align="right">27</td>
+<td align="right">73</td>
+<td align="right">1</td>
+<td align="right">27.00</td>
+<td align="right">0.3536</td>
+<td align="right">0.7900</td>
+</tr>
+</tbody>
+</table>
+<p>Looking at the bins of the variable age, it can be seen that the first bin has a high bad rate and contains a large proportion of the population. The bad rate of the middle bin is lower than the last bin. However if the second &amp; third bins are combined a monotonic decreasing trend can be forced. The function forceDecrTrend can be used for this. Eg: b1 &lt;- forceDecrTrend(b1,“age”)</p>
+<p>We can see that once a decreasing trend is forced, the variable age is now monotonically decreasing.</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="left">var</th>
+<th align="left">bin</th>
+<th align="right">count</th>
+<th align="right">bads</th>
+<th align="right">goods</th>
+<th align="right">propn</th>
+<th align="right">bad_rate</th>
+<th align="right">iv</th>
+<th align="right">ent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>5</td>
+<td align="left">LTV</td>
+<td align="left">LTV &lt;= 0.77</td>
+<td align="right">24</td>
+<td align="right">13</td>
+<td align="right">11</td>
+<td align="right">24</td>
+<td align="right">54.17</td>
+<td align="right">0.3843</td>
+<td align="right">0.9950</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td align="left">LTV</td>
+<td align="left">LTV &gt; 0.77</td>
+<td align="right">74</td>
+<td align="right">14</td>
+<td align="right">60</td>
+<td align="right">74</td>
+<td align="right">18.92</td>
+<td align="right">0.1398</td>
+<td align="right">0.6998</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td align="left">LTV</td>
+<td align="left">is.na(LTV)</td>
+<td align="right">2</td>
+<td align="right">0</td>
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="right">0.00</td>
+<td align="right">Inf</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td align="left">LTV</td>
+<td align="left">Total</td>
+<td align="right">100</td>
+<td align="right">27</td>
+<td align="right">73</td>
+<td align="right">1</td>
+<td align="right">27.00</td>
+<td align="right">0.5241</td>
+<td align="right">0.7567</td>
+</tr>
+<tr class="odd">
+<td>10</td>
+<td align="left">balance</td>
+<td align="left">balance &lt;= 6359</td>
+<td align="right">19</td>
+<td align="right">10</td>
+<td align="right">9</td>
+<td align="right">19</td>
+<td align="right">52.63</td>
+<td align="right">0.2718</td>
+<td align="right">0.9980</td>
+</tr>
+<tr class="even">
+<td>11</td>
+<td align="left">balance</td>
+<td align="left">balance &gt; 6359</td>
+<td align="right">81</td>
+<td align="right">17</td>
+<td align="right">64</td>
+<td align="right">81</td>
+<td align="right">20.99</td>
+<td align="right">0.0818</td>
+<td align="right">0.7412</td>
+</tr>
+<tr class="odd">
+<td>12</td>
+<td align="left">balance</td>
+<td align="left">Total</td>
+<td align="right">100</td>
+<td align="right">27</td>
+<td align="right">73</td>
+<td align="right">1</td>
+<td align="right">27.00</td>
+<td align="right">0.3536</td>
+<td align="right">0.7900</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td align="left">age</td>
+<td align="left">age &lt;= 34</td>
+<td align="right">44</td>
+<td align="right">19</td>
+<td align="right">25</td>
+<td align="right">44</td>
+<td align="right">43.18</td>
+<td align="right">0.2602</td>
+<td align="right">0.9865</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td align="left">age</td>
+<td align="left">age &gt; 34</td>
+<td align="right">56</td>
+<td align="right">8</td>
+<td align="right">48</td>
+<td align="right">56</td>
+<td align="right">14.29</td>
+<td align="right">0.2880</td>
+<td align="right">0.5917</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td align="left">age</td>
+<td align="left">Total</td>
+<td align="right">100</td>
+<td align="right">27</td>
+<td align="right">73</td>
+<td align="right">1</td>
+<td align="right">27.00</td>
+<td align="right">0.5482</td>
+<td align="right">0.7654</td>
+</tr>
+</tbody>
+</table>
+<p>This function can also take multiple variables as input if a decreasing trend is to be forced on multiple variables.</p>
+<p>Eg: forceDecrTrend(b1, c(“age”, “LTV”))</p>
+<p><br />
+Similarly the function forceIncrTrend can be used to force a monotonically increasing trend if required. The function manualSplit can be used to manually split the variable based on specified cuts. The function naCombine can be used to combine the NA bin with either the bin having the closest bad rate or the average bad rate if the count of observations in NA bin is low.</p>
+<p><br />
+Once this is done, the splits created can be replicated on a test dataframe to check if the same trand will hold on this.<br />
+Eg: b2 &lt;- binTest(b1, testDf, “BAD_FLG”, c(“age”, “LTV”))</p>
+<p><br />
+If there are a lot of flips on the test data, the variable can be discarded. Otherwise, increasing/decreasing trends can be forced on b2 to ensure that there are no flips. This can then be tested on the original data.<br />
+Eg: b1 &lt;- binTest(b2, loanData, “BAD_FLG”, c(“age”, “LTV”))</p>
+<p><br />
+Once the bins have been finalized, variables can be shortlisted based on IV and linearity. The bins of these shortlisted variables can be created in the data using the function createBins.<br />
+Eg: loanData1 &lt;- createBins(b1, loanData, c(“age”, “LTV”))<br />
+<br />
+The data frame loanData1 will have all the variables of data frame loanData along with binned variables which will be created with the prefix “b_” before the original name of the variable.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

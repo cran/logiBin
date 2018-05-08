@@ -24,7 +24,7 @@ Returns a list containing 3 objects. Similar to the getBins function
 This function splits variables based on cuts that have been input manually
 }
 \examples{
-b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.01)
+b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.8)
 b1 <- manualSplit(b1, 'age', 'bad_flag', c(25,40,55), loanData)
 
 }

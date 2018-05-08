@@ -16,7 +16,7 @@
 
 
 #' @title Bins variables to be used in logistic regression
-#' @description This function uses parallel processing to compute bins for continuous and categorical variables. The splits are computed using the partykit package which uses conditional inferencing trees. Refer to the package documentation for more details. A separate bin is created for NA values. This can be combined using naCombine function. Categorical variables with a maximum of 15 distinct values are supported.
+#' @description This function uses parallel processing to compute bins for continuous and categorical variables. The splits are computed using the partykit package which uses conditional inferencing trees. Refer to the package documentation for more details. A separate bin is created for NA values. This can be combined using naCombine function. Categorical variables with a maximum of 10 distinct values are supported.
 #'
 #' @param df - A data frame
 #' @param y - The name of the dependent variable
@@ -29,7 +29,7 @@
 #' The first is a data frame called varSummary which contains a summary of all the variables along with their IV value, entropy, p value from ctree function in partykit package, flag which indicates if bad rate increases/decreases with variable value, flag to indicate if a monotonic trend is present, number of bins which flip (i.e. do not follow a monotonic trend), number of bins of the variable and a flag to indicate whether it includes pure nodes (node which do not have any defaults).
 #' The second element is a data frame called bin which contains details of all the bins of the variables. The third element is a dataframe called err which contains details of all the variables that could not be split and the reason for the same.
 #'
-#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score'))
+#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'))
 #'
 #' @export
 getBins <- function(df,y,xVars, minProp = 0.03, minCr = 0.9, nCores=1)
@@ -98,10 +98,10 @@ getSplit <- function (d,y,x, minProp = 0.03, minCr = 0.9)
     iv[nrow(iv)+1, "var"] <- x
     iv[nrow(iv), "error"] <- "x should be numeric or character or factor"
   }
-  else if(!is.numeric(d[[x]]) & length(unique(d[[x]])) > 15)
+  else if(!is.numeric(d[[x]]) & length(unique(d[[x]])) > 10)
   {
     iv[nrow(iv)+1, "var"] <- x
-    iv[nrow(iv), "error"] <- "x has too many levels (> 15)"
+    iv[nrow(iv), "error"] <- "x has too many levels (> 10)"
   }
   else {
     d <- as.data.table(d)
@@ -210,8 +210,8 @@ getSplit <- function (d,y,x, minProp = 0.03, minCr = 0.9)
 #'
 #' @return Returns a list containing 3 objects. Similar to the getBins function
 #'
-#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'LTV'), minCr=0.01)
-#' b1 <- naCombine(b1, c('age','LTV'))
+#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'LTV'))
+#' b1 <- naCombine(b1, c('LTV'))
 #'
 #' @export
 naCombine <- function(binObj, xVars, cutoffPropn = 0.01)
@@ -308,7 +308,7 @@ updateBins <- function(var, rules, bads, goods)
 #'
 #' @return Returns a list containing 3 objects. Similar to the getBins function
 #'
-#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.01)
+#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.8)
 #' b1 <- manualSplit(b1, 'age', 'bad_flag', c(25,40,55), loanData)
 #'
 #' @export
@@ -446,8 +446,8 @@ getBinRules <- function(cuts, var)
 #'
 #' @return Returns a list containing 3 objects. Similar to the getBins function
 #'
-#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.6)
-#' b1 <- forceDecrTrend(b1, c('score','balance'))
+#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score'), minCr=0.6, minProp = 0.01)
+#' b1 <- forceDecrTrend(b1, c('score','age'))
 #'
 #' @export
 
@@ -492,7 +492,7 @@ forceDecrTrend <- function(binObj, xVars)
       {
         for(j in 1:(length(cuts)))
         {
-          if(badRt[j] < badRt[j+1])
+          if(badRt[j] <= badRt[j+1])
           {
             bads[j] <- bads[j]+bads[j+1]
             goods[j] <- goods[j]+goods[j+1]
@@ -518,7 +518,7 @@ forceDecrTrend <- function(binObj, xVars)
         }
       }
 
-      if(length(cuts)>1)
+      if(length(cuts)>0)
       {
         rules <- getBinRules(cuts, xVars[i])
         if(naBin > 0)
@@ -534,16 +534,19 @@ forceDecrTrend <- function(binObj, xVars)
 
         iv <- updateBins(xVars[i], rules, bads, goods)
 
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "iv"] <- iv[nrow(iv), "iv"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "ent"] <- iv[nrow(iv), "ent"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "trend"] <- iv[nrow(iv), "trend"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "monTrend"] <- iv[nrow(iv), "monTrend"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "flipRatio"] <- iv[nrow(iv), "flipRatio"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "numBins"] <- iv[nrow(iv), "numBins"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "purNode"] <- iv[nrow(iv), "purNode"]
-
-        binObj$bin <- binObj$bin[binObj$bin$var != xVars[i], ]
-        binObj$bin <- rbind(binObj$bin, iv[,1:9])
+	if( iv[nrow(iv), "trend"] == 'D')
+	{
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "iv"] <- iv[nrow(iv), "iv"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "ent"] <- iv[nrow(iv), "ent"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "trend"] <- iv[nrow(iv), "trend"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "monTrend"] <- iv[nrow(iv), "monTrend"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "flipRatio"] <- iv[nrow(iv), "flipRatio"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "numBins"] <- iv[nrow(iv), "numBins"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "purNode"] <- iv[nrow(iv), "purNode"]
+           binObj$bin <- binObj$bin[binObj$bin$var != xVars[i], ]
+           binObj$bin <- rbind(binObj$bin, iv[,1:9])
+	}
+	else print(paste(xVars[i], ": Decreasing trend could not be forced"))
       }
       else
         print(paste(xVars[i], ": Decreasing trend could not be forced"))
@@ -562,8 +565,8 @@ forceDecrTrend <- function(binObj, xVars)
 #'
 #' @return Returns a list containing 3 objects. Similar to the getBins function
 #'
-#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.6)
-#' b1 <- forceIncrTrend(b1, c('score','balance'))
+#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score'), minCr=0.6, minProp = 0.01)
+#' b1 <- forceIncrTrend(b1, c('score','age'))
 #'
 #' @export
 forceIncrTrend <- function(binObj, xVars)
@@ -607,7 +610,7 @@ forceIncrTrend <- function(binObj, xVars)
       {
         for(j in 1:(length(cuts)))
         {
-          if(badRt[j] > badRt[j+1])
+          if(badRt[j] >= badRt[j+1])
           {
             bads[j] <- bads[j]+bads[j+1]
             goods[j] <- goods[j]+goods[j+1]
@@ -633,7 +636,7 @@ forceIncrTrend <- function(binObj, xVars)
         }
       }
 
-      if(length(cuts)>1)
+      if(length(cuts)>0)
       {
         rules <- getBinRules(cuts, xVars[i])
         if(naBin > 0)
@@ -649,16 +652,19 @@ forceIncrTrend <- function(binObj, xVars)
 
         iv <- updateBins(xVars[i], rules, bads, goods)
 
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "iv"] <- iv[nrow(iv), "iv"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "ent"] <- iv[nrow(iv), "ent"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "trend"] <- iv[nrow(iv), "trend"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "monTrend"] <- iv[nrow(iv), "monTrend"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "flipRatio"] <- iv[nrow(iv), "flipRatio"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "numBins"] <- iv[nrow(iv), "numBins"]
-        binObj$varSummary[binObj$varSummary$var==xVars[i], "purNode"] <- iv[nrow(iv), "purNode"]
-
-        binObj$bin <- binObj$bin[binObj$bin$var != xVars[i], ]
-        binObj$bin <- rbind(binObj$bin, iv[,1:9])
+	if( iv[nrow(iv), "trend"] == 'I')
+	{
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "iv"] <- iv[nrow(iv), "iv"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "ent"] <- iv[nrow(iv), "ent"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "trend"] <- iv[nrow(iv), "trend"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "monTrend"] <- iv[nrow(iv), "monTrend"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "flipRatio"] <- iv[nrow(iv), "flipRatio"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "numBins"] <- iv[nrow(iv), "numBins"]
+           binObj$varSummary[binObj$varSummary$var==xVars[i], "purNode"] <- iv[nrow(iv), "purNode"]
+           binObj$bin <- binObj$bin[binObj$bin$var != xVars[i], ]
+           binObj$bin <- rbind(binObj$bin, iv[,1:9])
+	}
+	else print(paste(xVars[i], ": Increasing trend could not be forced"))
       }
       else
         print(paste(xVars[i], ": Increasing trend could not be forced"))
@@ -683,8 +689,8 @@ forceIncrTrend <- function(binObj, xVars)
 #' The first is a data frame called varSummary which contains a summary of the performance of the variables on the test data including their IV value, entropy, flag which indicates if bad rate increases/decreases with variable value, flag to indicate if a monotonic trend is present, number of bins which flip (i.e. do not follow a monotonic trend), number of bins of the variable and a flag to indicate whether it includes pure nodes (node which do not have any defaults).
 #' The second element is a data frame called bin which contains details of all the bins of the variables.
 #'
-#' @examples b1 <- getBins(loanData, "bad_flag", c('score', 'balance'), minCr=0.7)
-#' b2 <- binTest(b1, loanData[1:50,], "bad_flag", c('score'))
+#' @examples b1 <- getBins(loanData, "bad_flag", c('LTV', 'balance'))
+#' b2 <- binTest(b1, loanData[1:50,], "bad_flag", c('LTV', 'balance'))
 #'
 #' @export
 binTest<- function(binObj, testDf, y, xVars, nCores=1)
@@ -744,8 +750,8 @@ testBin <- function(binObj, df, y, x)
 #'
 #' @return Returns a dataframe which adds the binned variables to the original data frame
 #'
-#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.6)
-#' loanData <- createBins(b1, loanData, c('score', 'balance'))
+#' @examples b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.8)
+#' loanData <- createBins(b1, loanData, c('age', 'balance'))
 #'
 #' @export
 createBins <- function(binObj, df, xVars, prefix= "b_")

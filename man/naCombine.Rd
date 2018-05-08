@@ -20,7 +20,7 @@ Returns a list containing 3 objects. Similar to the getBins function
 This function combines the NA bin with either the bin having the closest bad rate or the average bad rate if the count of observations in NA bin is low
 }
 \examples{
-b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'LTV'), minCr=0.01)
-b1 <- naCombine(b1, c('age','LTV'))
+b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'LTV'))
+b1 <- naCombine(b1, c('LTV'))
 
 }

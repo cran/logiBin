@@ -1,0 +1,85 @@
+---
+title: "Binning variables before running logistic regression"
+author: "Sneha Tody"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The logiBin package enables fast binning of multiple variables using parallel processing. A summary of all the variables binned is generated which provides the information value, entropy, an indicator of whether the variable follows a monotonic trend or not, etc. It supports rebinning of variables to force a monotonic trend as well as manual binning based on pre specified cuts.
+
+## Creating the bins for continuous and categorical variables
+
+The getBins function uses parallel processing to compute bins for continuous and categorical variables. The splits are computed using the partykit package which uses conditional inferencing trees. Refer to the package documentation for more details. A separate bin is created for NA values. This can be combined using naCombine function. Categorical variables with a maximum of 10 distinct values are supported.
+
+
+Eg: b1 <- getBins(loanData, "bad_flag", c("age", "LTV", "score", "balance"), minCr = 0.8, nCores = 2)
+
+
+This retrurns a list containing 3 elements. One is a  a dataframe called err which contains details of all the variables that could not be split and the reason for the same.
+\
+\
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(logiBin::getBins(logiBin::loanData, "bad_flag", c("age", "LTV", "score", "balance"), minCr = 0.8)$err)
+```
+
+\
+It can be seen that no significant splits were found for the variable 'score'. The other variables specified were split into bins. The summary of these splits can be seen from the next element of the list which is a dataframe called varSummar. This contains the summary of the variables' IV value, entropy, p value from ctree function in partykit package, flag which indicates if bad rate increases/decreases with variable value, flag to indicate if a monotonic trend is present, number of bins which flip (i.e. do not follow a monotonic trend), number of bins of the variable and a flag to indicate whether it includes pure nodes (node which do not have any defaults). 
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(logiBin::getBins(logiBin::loanData, "bad_flag", c("age", "LTV", "score", "balance"), minCr = 0.8)$varSummary)
+```
+
+\
+The variables LTV & balance have a monotonic decreasing trend which indicates that the bad rate decreases as the value of the variable increases. The variable age has an increasing trend. However it is not monotonic and there is a flip in 50% of the bins. In order to check this, look at the second element of the list which is a data frame called bin which contains details of all the bins of the variables.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(logiBin::getBins(logiBin::loanData, "bad_flag", c("age", "LTV", "score", "balance"), minCr = 0.8)$bin)
+```
+
+
+Looking at the bins of the variable age, it can be seen that the first bin has a high bad rate and contains a large proportion of the population. The bad rate of the middle bin is lower than the last bin. However if the second & third bins are combined a monotonic decreasing trend can be forced. The function forceDecrTrend can be used for this.
+Eg: b1 <- forceDecrTrend(b1,"age")
+
+
+We can see that once a decreasing trend is forced, the variable age is now monotonically decreasing.
+```{r, echo=FALSE, results='asis'}
+knitr::kable(logiBin::forceDecrTrend(logiBin::getBins(logiBin::loanData, "bad_flag", c("age", "LTV", "score", "balance"), minCr = 0.8), "age")$bin)
+```
+
+This function can also take multiple variables as input if a decreasing trend is to be forced on multiple variables. 
+
+Eg: forceDecrTrend(b1, c("age", "LTV"))
+
+\
+Similarly the function forceIncrTrend can be used to force a monotonically increasing trend if required. The function manualSplit can be used to manually split the variable based on specified cuts. The function naCombine can be used to combine the NA bin with either the bin having the closest bad rate or the average bad rate if the count of observations in NA bin is low.
+
+\
+Once this is done, the splits created can be replicated on a test dataframe to check if the same trand will hold on this.
+\
+Eg: b2 <- binTest(b1, testDf, "BAD_FLG", c("age", "LTV"))
+
+\
+If there are a lot of flips on the test data, the variable can be discarded. Otherwise, increasing/decreasing trends can be forced on b2 to ensure that there are no flips. This can then be tested on the original data. 
+\
+Eg: b1 <- binTest(b2, loanData, "BAD_FLG", c("age", "LTV"))
+
+\
+Once the bins have been finalized, variables can be shortlisted based on IV and linearity. The bins of these shortlisted variables can be created in the data using the function createBins.
+\
+Eg: loanData1 <- createBins(b1, loanData, c("age", "LTV"))
+\
+\
+The data frame loanData1 will have all the variables of data frame loanData along with binned variables which will be created with the prefix "b_" before the original name of the variable.
+

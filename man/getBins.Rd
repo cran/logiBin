@@ -25,9 +25,9 @@ The first is a data frame called varSummary which contains a summary of all the 
 The second element is a data frame called bin which contains details of all the bins of the variables. The third element is a dataframe called err which contains details of all the variables that could not be split and the reason for the same.
 }
 \description{
-This function uses parallel processing to compute bins for continuous and categorical variables. The splits are computed using the partykit package which uses conditional inferencing trees. Refer to the package documentation for more details. A separate bin is created for NA values. This can be combined using naCombine function. Categorical variables with a maximum of 15 distinct values are supported.
+This function uses parallel processing to compute bins for continuous and categorical variables. The splits are computed using the partykit package which uses conditional inferencing trees. Refer to the package documentation for more details. A separate bin is created for NA values. This can be combined using naCombine function. Categorical variables with a maximum of 10 distinct values are supported.
 }
 \examples{
-b1 <- getBins(loanData, "bad_flag", c('age', 'score'))
+b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'))
 
 }

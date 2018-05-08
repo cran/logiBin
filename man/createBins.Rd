@@ -22,7 +22,7 @@ Returns a dataframe which adds the binned variables to the original data frame
 This function creates a data frame with binned variables
 }
 \examples{
-b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.6)
-loanData <- createBins(b1, loanData, c('score', 'balance'))
+b1 <- getBins(loanData, "bad_flag", c('age', 'score', 'balance'), minCr=0.8)
+loanData <- createBins(b1, loanData, c('age', 'balance'))
 
 }

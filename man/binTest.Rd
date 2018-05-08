@@ -26,7 +26,7 @@ The second element is a data frame called bin which contains details of all the 
 This function uses parallel processing to replicate the bins on test data. This can be used to check the stability of the variable.
 }
 \examples{
-b1 <- getBins(loanData, "bad_flag", c('score', 'balance'), minCr=0.7)
-b2 <- binTest(b1, loanData[1:50,], "bad_flag", c('score'))
+b1 <- getBins(loanData, "bad_flag", c('LTV', 'balance'))
+b2 <- binTest(b1, loanData[1:50,], "bad_flag", c('LTV', 'balance'))
 
 }
