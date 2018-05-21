@@ -112,33 +112,57 @@ getSplit <- function (d,y,x, minProp = 0.03, minCr = 0.9)
     if(is.factor(d[[x]]))
       charFlag = 'Y'
 
-    fit<-ctree(formula(paste(y, "~", x)), data = d, na.action = na.exclude,
-               control = ctree_control(minbucket = minProp*nrow(d), mincriterion = minCr))
+    fit<-try(ctree(formula(paste(y, "~", x)), data = d, na.action = na.exclude,
+                   control = ctree_control(minbucket = minProp*nrow(d), mincriterion = minCr)), silent=T)
 
-    if (width(fit) >= 2) {
+    if(class(fit)[1] == "try-error")
+    {
+      brks <- stats::quantile(d[[x]],na.rm = T,probs = seq(0,1,0.1))
+      if(brks[2]==brks[1]| brks[2] == brks[11])
+        brks = unique(brks)
+      else
+        brks = unique(brks[2:10])
+      rules <- getBinRules(sort(brks), x)
 
-      if(charFlag == 'Y')
-      {
-        nodes <- nodeids(fit, terminal = T)
-        rules <- character()
-        for(m in 1:length(nodes))
+      pVal <- 0
+      stat <- 0
+    }
+    else
+    {
+      if (width(fit) >= 2) {
+
+        if(charFlag == 'Y')
         {
-          lvls <- unique(na.omit(data_party(fit, nodes[m])[, x]))
-          rules[length(rules)+1] <- paste0(x, " %in% c(",paste0('\"', unique(na.omit(data_party(fit, nodes[m])[,x])), '\"', collapse = ","), ")")
+          nodes <- nodeids(fit, terminal = T)
+          rules <- character()
+          for(m in 1:length(nodes))
+          {
+            lvls <- unique(na.omit(data_party(fit, nodes[m])[, x]))
+            rules[length(rules)+1] <- paste0(x, " %in% c(",paste0('\"', unique(na.omit(data_party(fit, nodes[m])[,x])), '\"', collapse = ","), ")")
+          }
         }
+        else
+        {
+          cuts <- numeric()
+          for(m in 1:length(nodeids(fit)))
+            cuts <- rbind(cuts, fit[m]$node$split$breaks)
+          rules <- getBinRules(sort(cuts), x)
+        }
+
+
+        pVal <- fit[1]$node$info$p.value
+        stat <- fit[1]$node$info$criterion[1,1]
       }
+
       else
       {
-        cuts <- numeric()
-        for(m in 1:length(nodeids(fit)))
-          cuts <- rbind(cuts, fit[m]$node$split$breaks)
-        rules <- getBinRules(sort(cuts), x)
+        iv[nrow(iv)+1, "var"] <- x
+        iv[nrow(iv), "error"] <- "No significant splits"
       }
+    }
 
-
-      pVal <- fit[1]$node$info$p.value
-      stat <- fit[1]$node$info$criterion[1,1]
-
+    if(nrow(iv) == 0)
+    {
       for (j in 1:length(rules)){
         iv[nrow(iv)+1, "var"] <- x
         iv[nrow(iv),"bin"] <- rules[j]
@@ -146,6 +170,7 @@ getSplit <- function (d,y,x, minProp = 0.03, minCr = 0.9)
         d1<-subset(d,eval(parse(text=rules[[j]])))
         iv[nrow(iv),"count"]<- nrow(d1)
         iv[nrow(iv),"bads"]<- sum(d1[[y]])
+
         if (j>1)
         {
           if(iv[nrow(iv), "bads"]/iv[nrow(iv), "count"] >= iv[nrow(iv)-1, "bads"]/iv[nrow(iv)-1, "count"])
@@ -188,16 +213,9 @@ getSplit <- function (d,y,x, minProp = 0.03, minCr = 0.9)
       iv[nrow(iv),c("propn","goodCap","badCap")] <- 1
       iv[nrow(iv), "varType"] <- class(d[[x]])
     }
-    else{
-      iv[nrow(iv)+1, "var"] <- x
-      iv[nrow(iv), "error"] <- "No significant splits"
-    }
   }
   return (iv)
 }
-
-
-
 
 
 #' @title Combine NA bins

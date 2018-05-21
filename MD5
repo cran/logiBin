@@ -1,11 +1,11 @@
-1d772492fed369563d9223191cd2c8c8 *DESCRIPTION
+cc7a5244206e58508f865b795387d659 *DESCRIPTION
 297e4f2eb703033ee17a5540eacb80e4 *NAMESPACE
-e562fa3b6b79e83f1667bf51eedee516 *R/logiBin.R
-b078c089308300fe6c61cbabcde22728 *build/vignette.rds
+06ebf18bfd3ce7c2f5e647f7dc39639e *R/logiBin.R
+c8ad4dcd7328cdfbbf5b04d0b3122326 *build/vignette.rds
 f81b97bc6b7c4b7e9df1ec7a602a8b49 *data/test.RData
 f88b8a144318c09b8632ff30509eb28a *inst/doc/my-vignette.R
-5bc636877705479c1f08fe9422a55be1 *inst/doc/my-vignette.Rmd
-2f735541d77ebbfc561a985608f323fb *inst/doc/my-vignette.html
+540f1b237e2fe4176aebee263d56971b *inst/doc/my-vignette.Rmd
+bbb1a36451657b70105fa3b633a15b6c *inst/doc/my-vignette.html
 01a232871ca4c4aedde81045214ad86d *man/binTest.Rd
 fb13150706c263193f330afba1126fa3 *man/createBins.Rd
 497b02a970a1a50a6e355dc2bdb2ae25 *man/forceDecrTrend.Rd
@@ -14,4 +14,4 @@ c6d22dc1ea8d80573be76ce035ee7a77 *man/forceIncrTrend.Rd
 51ddd8b73be75b0ac04283bb4e062df8 *man/loanData.Rd
 ede447a4caf5b265f7e47315ea25ac43 *man/manualSplit.Rd
 cc3195bc21bb1e665001ed6b265a005f *man/naCombine.Rd
-5bc636877705479c1f08fe9422a55be1 *vignettes/my-vignette.Rmd
+540f1b237e2fe4176aebee263d56971b *vignettes/my-vignette.Rmd
